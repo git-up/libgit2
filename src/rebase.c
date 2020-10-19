@@ -979,7 +979,7 @@ static int rebase_commit__create(
 	}
 
 	if ((error = git_commit_create(&commit_id, rebase->repo, NULL, author,
-		committer, message_encoding, message, tree, 1,
+		committer, message_encoding, message, NULL, tree, 1,
 		(const git_commit **)&parent_commit)) < 0 ||
 		(error = git_commit_lookup(&commit, rebase->repo, &commit_id)) < 0)
 		goto done;

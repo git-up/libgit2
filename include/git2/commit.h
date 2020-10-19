@@ -336,6 +336,7 @@ GIT_EXTERN(int) git_commit_create(
 	const git_signature *committer,
 	const char *message_encoding,
 	const char *message,
+    const char *signatureString,
 	const git_tree *tree,
 	size_t parent_count,
 	const git_commit *parents[]);
@@ -439,6 +440,7 @@ GIT_EXTERN(int) git_commit_create_buffer(
 	const git_signature *committer,
 	const char *message_encoding,
 	const char *message,
+    const char *signatureString,
 	const git_tree *tree,
 	size_t parent_count,
 	const git_commit *parents[]);

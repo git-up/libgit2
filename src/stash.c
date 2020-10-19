@@ -140,6 +140,7 @@ static int commit_index(
 		stasher,
 		NULL,
 		git_buf_cstr(&msg),
+        NULL,
 		i_tree,
 		1,
 		&parent)) < 0)
@@ -282,6 +283,7 @@ static int commit_untracked(
 		stasher,
 		NULL,
 		git_buf_cstr(&msg),
+        NULL,
 		u_tree,
 		0,
 		NULL)) < 0)
@@ -385,6 +387,7 @@ static int commit_worktree(
 		stasher,
 		NULL,
 		message,
+        NULL,
 		w_tree,
 		u_commit ? 3 : 2,
 		parents);

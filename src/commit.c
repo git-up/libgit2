@@ -21,6 +21,8 @@
 #include "object.h"
 #include "oidarray.h"
 
+static void format_header_field(git_buf *out, const char *field, const char *content);
+
 void git_commit__free(void *_commit)
 {
 	git_commit *commit = _commit;
@@ -45,6 +47,7 @@ static int git_commit__create_buffer_internal(
 	const git_signature *committer,
 	const char *message_encoding,
 	const char *message,
+	const char *signature,
 	const git_oid *tree,
 	git_array_oid_t *parents)
 {
@@ -65,6 +68,10 @@ static int git_commit__create_buffer_internal(
 
 	if (message_encoding != NULL)
 		git_buf_printf(out, "encoding %s\n", message_encoding);
+	
+	if (signature != NULL) {
+		format_header_field(out, "gpgsig", signature);
+	}
 
 	git_buf_putc(out, '\n');
 
@@ -125,6 +132,7 @@ static int git_commit__create_internal(
 	const git_signature *committer,
 	const char *message_encoding,
 	const char *message,
+	const char *signatureString,
 	const git_oid *tree,
 	git_commit_parent_callback parent_cb,
 	void *parent_payload,
@@ -151,7 +159,7 @@ static int git_commit__create_internal(
 		goto cleanup;
 
 	error = git_commit__create_buffer_internal(&buf, author, committer,
-						   message_encoding, message, tree,
+						   message_encoding, message, signatureString, tree,
 						   &parents);
 
 	if (error < 0)
@@ -180,6 +188,56 @@ cleanup:
 	return error;
 }
 
+
+int git_commit_create_buffer_for_signature(
+   git_buf* out,
+   git_oid *id,
+   git_repository *repo,
+   const char *update_ref,
+   const git_signature *author,
+   const git_signature *committer,
+   const char *message_encoding,
+   const char *message,
+   const git_oid *tree,
+   git_commit_parent_callback parent_cb,
+   void *parent_payload,
+   bool validate)
+{
+   int error;
+   git_reference *ref = NULL;
+   git_buf buf = GIT_BUF_INIT;
+   const git_oid *current_id = NULL;
+   git_array_oid_t parents = GIT_ARRAY_INIT;
+
+   if (update_ref) {
+	   error = git_reference_lookup_resolved(&ref, repo, update_ref, 10);
+	   if (error < 0 && error != GIT_ENOTFOUND)
+		   return error;
+   }
+   giterr_clear();
+
+   if (ref)
+	   current_id = git_reference_target(ref);
+
+   if ((error = validate_tree_and_parents(&parents, repo, tree, parent_cb, parent_payload, current_id, validate)) < 0)
+	   goto cleanup;
+
+   error = git_commit__create_buffer_internal(&buf, author, committer,
+											  message_encoding, message, NULL, tree,
+											  &parents);
+
+
+   if (error < 0)
+	   goto cleanup;
+   git_buf_sets(out, git_buf_cstr(&buf));
+
+cleanup:
+   git_array_clear(parents);
+   git_reference_free(ref);
+   git_buf_free(&buf);
+   return error;
+}
+
 int git_commit_create_from_callback(
 	git_oid *id,
 	git_repository *repo,
@@ -188,12 +246,13 @@ int git_commit_create_from_callback(
 	const git_signature *committer,
 	const char *message_encoding,
 	const char *message,
+	const char *signatureString,
 	const git_oid *tree,
 	git_commit_parent_callback parent_cb,
 	void *parent_payload)
 {
 	return git_commit__create_internal(
-		id, repo, update_ref, author, committer, message_encoding, message,
+		id, repo, update_ref, author, committer, message_encoding, message, signatureString,
 		tree, parent_cb, parent_payload, true);
 }
 
@@ -234,7 +293,7 @@ int git_commit_create_v(
 
 	error = git_commit__create_internal(
 		id, repo, update_ref, author, committer,
-		message_encoding, message, git_tree_id(tree),
+		message_encoding, message, NULL, git_tree_id(tree),
 		commit_parent_from_varargs, &data, false);
 
 	va_end(data.args);
@@ -268,7 +327,7 @@ int git_commit_create_from_ids(
 
 	return git_commit__create_internal(
 		id, repo, update_ref, author, committer,
-		message_encoding, message, tree,
+		message_encoding, message, NULL, tree,
 		commit_parent_from_ids, &data, true);
 }
 
@@ -298,6 +357,7 @@ int git_commit_create(
 	const git_signature *committer,
 	const char *message_encoding,
 	const char *message,
+	const char *signatureString,
 	const git_tree *tree,
 	size_t parent_count,
 	const git_commit *parents[])
@@ -308,7 +368,7 @@ int git_commit_create(
 
 	return git_commit__create_internal(
 		id, repo, update_ref, author, committer,
-		message_encoding, message, git_tree_id(tree),
+		message_encoding, message, signatureString, git_tree_id(tree),
 		commit_parent_from_array, &data, false);
 }
 
@@ -370,7 +430,7 @@ int git_commit_amend(
 	}
 
 	error = git_commit__create_internal(
-		id, repo, NULL, author, committer, message_encoding, message,
+		id, repo, NULL, author, committer, message_encoding, message, NULL,
 		&tree_id, commit_parent_for_amend, (void *)commit_to_amend, false);
 
 	if (!error && update_ref) {
@@ -801,6 +861,7 @@ int git_commit_create_buffer(git_buf *out,
 	const git_signature *committer,
 	const char *message_encoding,
 	const char *message,
+	const char *signatureString,
 	const git_tree *tree,
 	size_t parent_count,
 	const git_commit *parents[])
@@ -819,7 +880,7 @@ int git_commit_create_buffer(git_buf *out,
 
 	error = git_commit__create_buffer_internal(
 		out, author, committer,
-		message_encoding, message, tree_id,
+		message_encoding, message, signatureString, tree_id,
 		&parents_arr);
 
 	git_array_clear(parents_arr);

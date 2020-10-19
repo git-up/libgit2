@@ -71,10 +71,24 @@ GIT_EXTERN(int) git_commit_create_from_callback(
 	const git_signature *committer,
 	const char *message_encoding,
 	const char *message,
+    const char *signatureString, // @see git_commit_create
 	const git_oid *tree,
 	git_commit_parent_callback parent_cb,
 	void *parent_payload);
 
+GIT_EXTERN(int) git_commit_create_buffer_for_signature(
+                                                   git_buf* out,
+                                                   git_oid *id,
+                                                   git_repository *repo,
+                                                   const char *update_ref,
+                                                   const git_signature *author,
+                                                   const git_signature *committer,
+                                                   const char *message_encoding,
+                                                   const char *message,
+                                                   const git_oid *tree,
+                                                   git_commit_parent_callback parent_cb,
+                                                   void *parent_payload,
+                                                               bool validate);
 /** @} */
 GIT_END_DECL
 #endif
