@@ -210,7 +210,7 @@ ENDIF()
 
 # Optional external dependency: libssh2
 IF (USE_SSH)
-	FIND_PKGLIBRARIES(LIBSSH2 libssh2)
+	FIND_PACKAGE(LIBSSH2)
 ENDIF()
 IF (LIBSSH2_FOUND)
 	SET(GIT_SSH 1)
@@ -277,6 +277,7 @@ target_compile_definitions(git2internal PRIVATE _FILE_OFFSET_BITS=64)
 
 # Collect sourcefiles
 file(GLOB SRC_H
+    "${libgit2_SOURCE_DIR}/include/gitup_extensions.h"
 	"${libgit2_SOURCE_DIR}/include/git2.h"
 	"${libgit2_SOURCE_DIR}/include/git2/*.h"
 	"${libgit2_SOURCE_DIR}/include/git2/sys/*.h")
