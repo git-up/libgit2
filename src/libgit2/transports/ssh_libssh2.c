@@ -366,10 +366,11 @@ static int _git_ssh_authenticate_session(
 		default:
 			rc = LIBSSH2_ERROR_AUTHENTICATION_FAILED;
 		}
-	} while (LIBSSH2_ERROR_EAGAIN == rc || LIBSSH2_ERROR_TIMEOUT == rc);
+	} while (LIBSSH2_ERROR_EAGAIN == rc);
 
 	if (rc == LIBSSH2_ERROR_PASSWORD_EXPIRED ||
 		rc == LIBSSH2_ERROR_AUTHENTICATION_FAILED ||
+		rc == LIBSSH2_ERROR_FILE || /// PATCH: Invalid key file
 		rc == LIBSSH2_ERROR_PUBLICKEY_UNVERIFIED)
 			return GIT_EAUTH;
 
@@ -400,6 +401,7 @@ static int request_creds(git_credential **out, ssh_subtransport *t, const char *
 		if (error == GIT_PASSTHROUGH) {
 			no_callback = 1;
 		} else if (error < 0) {
+			git_error_set(GIT_ERROR_SSH, "credentials callback returned an error");
 			return error;
 		} else if (!cred) {
 			git_error_set(GIT_ERROR_SSH, "callback failed to initialize SSH credentials");
@@ -544,6 +546,10 @@ static int _git_ssh_session_create(
 
 	if (git_socket_stream__timeout > 0) {
 		libssh2_session_set_timeout(s, git_socket_stream__timeout);
+
+		/// PATCH
+		/* Configure libssh2 to be blocking */
+		libssh2_session_set_blocking(s, 1);
 	}
 
 	if ((rc = load_known_hosts(&known_hosts, s)) < 0) {

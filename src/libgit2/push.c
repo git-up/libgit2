@@ -469,7 +469,9 @@ static int do_push(git_push *push)
 	if (callbacks && callbacks->push_negotiation) {
 		git_error_clear();
 
+		/// PATCH
 		error = callbacks->push_negotiation(
+			push->remote,
 			(const git_push_update **) push->updates.contents,
 			push->updates.length, callbacks->payload);
 
