@@ -706,7 +706,13 @@ int gitup_clone_into(
     const char *branch)
 {
     assert(repo && remote && fetch_opts && checkout_opts);
-    return clone_into(repo, remote, fetch_opts, checkout_opts, branch);
+    
+    git_clone_options options = GIT_CLONE_OPTIONS_INIT;
+    options.fetch_opts = *fetch_opts;
+    options.checkout_opts = *checkout_opts;
+    options.checkout_branch = branch;
+    
+    return clone_into(repo, remote, &options);
 }
 
 #ifndef GIT_DEPRECATE_HARD
