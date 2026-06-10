@@ -286,6 +286,7 @@ static int ssh_exec_subtransport_close(git_smart_subtransport *t)
 
 	if (transport->process) {
 		git_process_close(transport->process);
+		git_process_wait(NULL, transport->process);
 		git_process_free(transport->process);
 		transport->process = NULL;
 	}
