@@ -27,6 +27,12 @@ file(GLOB SRC_GIT2 *.c *.h
 list(SORT SRC_GIT2)
 target_sources(libgit2 PRIVATE ${SRC_GIT2})
 
+file(GLOB SRC_GITUP
+	"${PROJECT_SOURCE_DIR}/src/gitup_*.c"
+	"${PROJECT_SOURCE_DIR}/include/gitup_extensions.h")
+list(SORT SRC_GITUP)
+target_sources(libgit2 PRIVATE ${SRC_GITUP})
+
 if(WIN32 AND NOT CYGWIN)
 	# Add resource information on Windows
 	set(SRC_RC "git2.rc")
@@ -133,8 +139,11 @@ install(TARGETS libgit2package
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/git2/
-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${LIBGIT2_FILENAME}")
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${LIBGIT2_FILENAME}"
+        PATTERN ".DS_Store" EXCLUDE)
 install(FILES ${PROJECT_BINARY_DIR}/include/git2/experimental.h
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${LIBGIT2_FILENAME}")
 install(FILES "${PROJECT_BINARY_DIR}/include/${LIBGIT2_FILENAME}.h"
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES "${PROJECT_SOURCE_DIR}/include/gitup_extensions.h"
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
