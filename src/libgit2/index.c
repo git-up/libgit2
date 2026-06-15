@@ -3938,6 +3938,12 @@ void git_indexwriter_cleanup(git_indexwriter *writer)
 	writer->index = NULL;
 }
 
+void git_index_forget_file(git_index *index)
+{
+	index->index_file_path = NULL;
+	index->on_disk = 0;
+}
+
 /* Deprecated functions */
 
 #ifndef GIT_DEPRECATE_HARD
